@@ -1,0 +1,57 @@
+
+def K(eps, X, Y):
+    N = len(X)
+    M = len(Y)
+    K = np.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            K[i, j] = np.exp(-np.linalg.norm(X[i] - Y[j])**2 / eps)
+            
+    return K
+
+def calc_w(X, Y):
+    N = len(X)
+    M = len(Y)
+    w = np.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            w[i, j] = np.linalg.norm(X[i] - Y[j])**2
+    return w    
+
+def F(eps,P,X,Y):
+    w=calc_w(X,Y)
+    f=np.sum(P*w) +eps*np.sum(P * np.log(P))  
+    return f
+
+def sinkhorn(eps, a, b, X, Y, limit):
+    N = len(X)
+    M = len(Y)
+    u = np.ones(N)
+    v = np.ones(M)
+    k = K(eps, X, Y)
+    flag = True
+    delta = 1
+    while delta > limit:
+        prevresult = result if flag == False else np.inf
+        
+        u = a / (k @ v)
+        v = b / (k.T @ u)
+        
+        P = np.diag(u) @ k @ np.diag(v)
+        
+        result = F(eps,P,X,Y)
+        
+        flag = False
+        delta = np.abs(result - prevresult)
+        
+    return result
+
+
+def sim(n,m,eps,dim):
+    X,Y=npr.rand(n,dim),npr.rand(m,dim)
+    a,b=npr.rand(n),npr.rand(m)       
+    return sinkhorn(eps,a,b,X,Y,0.01)
+
+print(rf'En dimension 1,N=100,$\eps$ = 0.5 $\rightarrow$ min $\approx$ {sim(100,200,0.5,1)}')
+print(rf'En dimension 2,N=100,$\eps$ = 0.5 $\rightarrow$ min $\approx$ {sim(100,200,0.5,2)}')
+print(rf'En dimension 2,N=100,$\eps$ = 0.1 $\rightarrow$ min $\approx$ {sim(100,200,0.5,2)}')
